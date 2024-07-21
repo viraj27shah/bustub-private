@@ -25,15 +25,79 @@ namespace bustub {
 
 enum class AccessType { Unknown = 0, Lookup, Scan, Index };
 
+class MinHeap{
+  private:
+    // Array which stores LRUKNode pointers
+    LRUKNode** arr_ele_;
+    size_t heap_size_;
+    size_t heap_capacity_;
+
+    void heapifyUp(size_t indOfArr);
+
+    void heapifyDown(size_t indOfArr);
+
+    bool comparator(LRUKNode* a,LRUKNode* b);
+  
+  public:
+
+    explicit MinHeap(size_t cap);
+
+    int getHeapSize();
+
+    void push(LRUKNode*);
+
+    void pop();
+
+    bool isEmpty();
+
+    LRUKNode* top(); 
+
+    void removeEle(size_t indOfArr);
+
+    void heapifyUpAndDown(size_t indOfArr);
+};
+
 class LRUKNode {
  private:
   /** History of last seen K timestamps of this page. Least recent timestamp stored in front. */
   // Remove maybe_unused if you start using them. Feel free to change the member variables as you want.
 
-  [[maybe_unused]] std::list<size_t> history_;
-  [[maybe_unused]] size_t k_;
-  [[maybe_unused]] frame_id_t fid_;
-  [[maybe_unused]] bool is_evictable_{false};
+  // Storing timestamp in sec till 1st epoch, so minimum will be oldest.
+  // Adding new access at front and oldest will be at last
+  std::list<size_t> history_;
+  size_t k_;
+  frame_id_t fid_;
+  bool is_evictable_{false};                  // false means it will not present in min heap
+  size_t index_in_heap_arr_;                  // keep the index of minheap arr, at which index it is present
+
+  public:
+
+  // Constructor
+  explicit LRUKNode(size_t k,frame_id_t fid);
+
+  // Return history_
+  std::list<size_t> getHistory();
+
+  // Return fid_
+  frame_id_t getFrameId();
+
+  // Return index_in_heap_arr_
+  size_t getIndexInHeapArr();
+
+  // Set index_in_heap_arr_
+  void setIndexInHeapArr(size_t ind);
+
+  // get is_evicatble value
+  bool getIsEvictable();
+
+  // set is_evicatble value
+  void setIsEvictable(bool setVal);
+
+  // ENter Current timestamp in history
+  void enterCurrentTimeStamp();
+
+  ~LRUKNode();
+
 };
 
 /**
@@ -116,6 +180,7 @@ class LRUKReplacer {
    *
    * @param frame_id id of frame whose 'evictable' status will be modified
    * @param set_evictable whether the given frame is evictable or not
+   * 
    */
   void SetEvictable(frame_id_t frame_id, bool set_evictable);
 
@@ -147,15 +212,22 @@ class LRUKReplacer {
    */
   auto Size() -> size_t;
 
+
+  // Check if frame no is valid or not
+  bool validityOfFrame(frame_id_t frame_id);
+
  private:
   // TODO(student): implement me! You can replace these member variables as you like.
   // Remove maybe_unused if you start using them.
-  [[maybe_unused]] std::unordered_map<frame_id_t, LRUKNode> node_store_;
+  std::unordered_map<frame_id_t, LRUKNode*> node_store_;
   [[maybe_unused]] size_t current_timestamp_{0};
   [[maybe_unused]] size_t curr_size_{0};
-  [[maybe_unused]] size_t replacer_size_;
-  [[maybe_unused]] size_t k_;
+  size_t replacer_size_;                                 // which tracks the number of evictable frames.
+  size_t k_;
   [[maybe_unused]] std::mutex latch_;
+  // storing LRUKNode pointers in it.
+  MinHeap min_heap_obj_;                                    // Keep track of what to evict next
+  size_t total_num_frames;
 };
 
 }  // namespace bustub
