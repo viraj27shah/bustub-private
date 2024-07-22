@@ -17,6 +17,7 @@
 #include <mutex>  // NOLINT
 #include <unordered_map>
 #include <vector>
+#include<memory>
 
 #include "common/config.h"
 #include "common/macros.h"
@@ -71,7 +72,7 @@ class LRUKNode {
 class MinHeap{
   private:
     // Array which stores LRUKNode pointers
-    LRUKNode** arr_ele_;
+    std::shared_ptr<LRUKNode>* arr_ele_;
     size_t heap_size_;
     size_t heap_capacity_;
 
@@ -79,7 +80,7 @@ class MinHeap{
 
     void heapifyDown(size_t indOfArr);
 
-    bool comparator(LRUKNode* a,LRUKNode* b);
+    bool comparator(std::shared_ptr<LRUKNode>& a,std::shared_ptr<LRUKNode>& b);
   
   public:
 
@@ -89,13 +90,13 @@ class MinHeap{
 
     size_t getHeapSize();
 
-    void push(LRUKNode*);
+    void push(std::shared_ptr<LRUKNode>);
 
     void pop();
 
     bool isEmpty();
 
-    LRUKNode* top(); 
+    std::shared_ptr<LRUKNode> top(); 
 
     void removeEle(size_t indOfArr);
 
@@ -131,7 +132,7 @@ class LRUKReplacer {
    *
    * @brief Destroys the LRUReplacer.
    */
-  ~LRUKReplacer() = default;
+  ~LRUKReplacer();
 
   /**
    * TODO(P1): Add implementation
@@ -221,7 +222,7 @@ class LRUKReplacer {
  private:
   // TODO(student): implement me! You can replace these member variables as you like.
   // Remove maybe_unused if you start using them.
-  std::unordered_map<frame_id_t, LRUKNode*> node_store_;
+  std::unordered_map<frame_id_t, std::shared_ptr<LRUKNode>> node_store_;
   [[maybe_unused]] size_t current_timestamp_{0};
   [[maybe_unused]] size_t curr_size_{0};
   size_t replacer_size_;                                 // which tracks the number of evictable frames.

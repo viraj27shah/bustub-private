@@ -14,6 +14,7 @@
 #include "common/exception.h"
 #include <chrono>
 #include <ctime>
+#include<memory>
 
 namespace bustub {
 
@@ -85,7 +86,7 @@ void LRUKNode::enterCurrentTimeStamp()
 
 // Custom Comparator for MinHeap
 // if(a<b) return true else false
-bool MinHeap::comparator(LRUKNode* ele1,LRUKNode* ele2)
+bool MinHeap::comparator(std::shared_ptr<LRUKNode>& ele1,std::shared_ptr<LRUKNode>& ele2)
 {
 
     std::list<size_t> l1 = ele1->getHistory();
@@ -113,14 +114,14 @@ bool MinHeap::comparator(LRUKNode* ele1,LRUKNode* ele2)
 // Min Heap Constructor
 MinHeap::MinHeap(size_t cap) : heap_capacity_(cap)
 {
-    arr_ele_ = new LRUKNode*[heap_capacity_];
+    arr_ele_ = new std::shared_ptr<LRUKNode>[heap_capacity_];
     heap_size_ = 0; 
 }
 
 // Destructor
 MinHeap::~MinHeap()
 {
-    delete arr_ele_;
+    delete[] arr_ele_;
 }
 
 // Return the no of elements present in heap
@@ -130,7 +131,7 @@ size_t MinHeap::getHeapSize()
 }
 
 // Push the element into heap
-void MinHeap::push(LRUKNode* node)
+void MinHeap::push(std::shared_ptr<LRUKNode> node)
 {
     BUSTUB_ASSERT(heap_capacity_ >= heap_size_, "Min Heap size can not be greater than capacity");
     arr_ele_[heap_size_] = node;
@@ -239,7 +240,7 @@ bool MinHeap::isEmpty()
     return (heap_size_ == 0);
 }
 
-LRUKNode* MinHeap::top()
+std::shared_ptr<LRUKNode> MinHeap::top()
 {
     try
     {
@@ -290,7 +291,7 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool
     if(replacer_size_ == 0)
         return false; 
     
-    LRUKNode* topNode = min_heap_obj_.top();
+    std::shared_ptr<LRUKNode> topNode = min_heap_obj_.top();
     BUSTUB_ASSERT(topNode->getIsEvictable() != false, "Can not evict is evictable false frame");
     *frame_id = topNode->getFrameId();
 
@@ -320,7 +321,7 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
     if(node_store_.find(frame_id) == node_store_.end())
     {
         // Create new node
-        LRUKNode* node = new LRUKNode(k_,frame_id);
+        std::shared_ptr<LRUKNode> node = std::make_shared<LRUKNode>(k_,frame_id);
         node->enterCurrentTimeStamp();
 
         // Do entry in umap
@@ -331,7 +332,7 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
     }
     else
     {
-        LRUKNode* node = node_store_[frame_id];
+        std::shared_ptr<LRUKNode> node(node_store_[frame_id]);
         node->enterCurrentTimeStamp();
 
         // Heapify
@@ -349,7 +350,7 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
 
     if(node_store_.find(frame_id) != node_store_.end())
     {
-        LRUKNode* node = node_store_[frame_id];
+        std::shared_ptr<LRUKNode> node (node_store_[frame_id]);
         if(set_evictable == false)
         {
             if(node->getIsEvictable() == true)
@@ -381,7 +382,7 @@ void LRUKReplacer::Remove(frame_id_t frame_id)
 
     if(node_store_.find(frame_id) != node_store_.end())
     {
-        LRUKNode* node = node_store_[frame_id];
+        std::shared_ptr<LRUKNode> node (node_store_[frame_id]);
         BUSTUB_ASSERT(node->getIsEvictable() == true,"Frame can not be remove as it is non evictable");
 
         // Remove node from minheap
@@ -394,7 +395,7 @@ void LRUKReplacer::Remove(frame_id_t frame_id)
         node_store_.erase(frame_id);
 
         // Remove LRUKNODE
-        delete node;
+        // delete node;
 
     } 
     else
@@ -416,6 +417,11 @@ bool LRUKReplacer::validityOfFrame(frame_id_t frame_id)
         return false; 
     else    
         return true;
+}
+
+LRUKReplacer::~LRUKReplacer()
+{
+    node_store_.clear();
 }
 
 // ################################################# LRUKReplacer Functions End ################################################# //
