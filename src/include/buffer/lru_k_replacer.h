@@ -206,6 +206,8 @@ class LRUKReplacer {
    */
   void Remove(frame_id_t frame_id);
 
+  void RemoveWithoutLock(frame_id_t frame_id);
+
   /**
    * TODO(P1): Add implementation
    *
@@ -227,7 +229,7 @@ class LRUKReplacer {
   [[maybe_unused]] size_t curr_size_{0};
   size_t replacer_size_;                                 // which tracks the number of evictable frames.
   size_t k_;
-  [[maybe_unused]] std::mutex latch_;
+  std::mutex latch_;
   // storing LRUKNode pointers in it.
   MinHeap min_heap_obj_;                                    // Keep track of what to evict next
   size_t total_num_frames;
