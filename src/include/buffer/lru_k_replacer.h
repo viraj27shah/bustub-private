@@ -25,38 +25,6 @@ namespace bustub {
 
 enum class AccessType { Unknown = 0, Lookup, Scan, Index };
 
-class MinHeap{
-  private:
-    // Array which stores LRUKNode pointers
-    LRUKNode** arr_ele_;
-    size_t heap_size_;
-    size_t heap_capacity_;
-
-    void heapifyUp(size_t indOfArr);
-
-    void heapifyDown(size_t indOfArr);
-
-    bool comparator(LRUKNode* a,LRUKNode* b);
-  
-  public:
-
-    explicit MinHeap(size_t cap);
-
-    int getHeapSize();
-
-    void push(LRUKNode*);
-
-    void pop();
-
-    bool isEmpty();
-
-    LRUKNode* top(); 
-
-    void removeEle(size_t indOfArr);
-
-    void heapifyUpAndDown(size_t indOfArr);
-};
-
 class LRUKNode {
  private:
   /** History of last seen K timestamps of this page. Least recent timestamp stored in front. */
@@ -96,8 +64,42 @@ class LRUKNode {
   // ENter Current timestamp in history
   void enterCurrentTimeStamp();
 
-  ~LRUKNode();
+  // ~LRUKNode();
 
+};
+
+class MinHeap{
+  private:
+    // Array which stores LRUKNode pointers
+    LRUKNode** arr_ele_;
+    size_t heap_size_;
+    size_t heap_capacity_;
+
+    void heapifyUp(size_t indOfArr);
+
+    void heapifyDown(size_t indOfArr);
+
+    bool comparator(LRUKNode* a,LRUKNode* b);
+  
+  public:
+
+    explicit MinHeap(size_t cap);
+
+    ~MinHeap();
+
+    size_t getHeapSize();
+
+    void push(LRUKNode*);
+
+    void pop();
+
+    bool isEmpty();
+
+    LRUKNode* top(); 
+
+    void removeEle(size_t indOfArr);
+
+    void heapifyUpAndDown(size_t indOfArr);
 };
 
 /**

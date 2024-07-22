@@ -22,7 +22,7 @@ namespace bustub {
 // Constructor
 LRUKNode::LRUKNode(size_t k,frame_id_t fid) : k_(k),fid_(fid) 
 {
-    for(int i=0;i<k;i++)
+    for(size_t i=0;i<k;i++)
         history_.push_front(0);
     
     index_in_heap_arr_ = -1;
@@ -62,18 +62,22 @@ void LRUKNode::setIsEvictable(bool setVal)
 
 void LRUKNode::enterCurrentTimeStamp()
 {
-    std::time_t now = std::time(nullptr);
-    size_t now_size_t = static_cast<size_t>(now);
+    // std::time_t now = std::time(nullptr);
+    // size_t now_size_t = static_cast<size_t>(now);
     
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+    size_t now_size_t = static_cast<size_t>(duration.count());
+
     history_.pop_back();
     history_.push_front(now_size_t);
     return;
 }
 
-LRUKNode::~LRUKNode()
-{
+// LRUKNode::~LRUKNode()
+// {
 
-}
+// }
 
 // ################################################# LRUKNode Functions End ################################################# //
 
@@ -98,6 +102,8 @@ bool MinHeap::comparator(LRUKNode* ele1,LRUKNode* ele2)
             it2++;
             continue;
         }
+        else if((*it1) == (*it2))
+            return (ele1->getFrameId()) < (ele2->getFrameId());
         return ((*it1) < (*it2));
     }
 
@@ -111,8 +117,14 @@ MinHeap::MinHeap(size_t cap) : heap_capacity_(cap)
     heap_size_ = 0; 
 }
 
+// Destructor
+MinHeap::~MinHeap()
+{
+    delete arr_ele_;
+}
+
 // Return the no of elements present in heap
-int MinHeap::getHeapSize()
+size_t MinHeap::getHeapSize()
 {
     return heap_size_;
 }
@@ -131,7 +143,7 @@ void MinHeap::push(LRUKNode* node)
 // pop the element from heap
 void MinHeap::pop()
 {
-    BUSTUB_ASSERT(isEmpty(), "Min Heap is empty so can't do pop");
+    BUSTUB_ASSERT(!isEmpty(), "Min Heap is empty so can't do pop");
     heap_size_--;
     std::swap(arr_ele_[0],arr_ele_[heap_size_]);
     arr_ele_[0]->setIndexInHeapArr(0);
@@ -143,9 +155,9 @@ void MinHeap::pop()
 
 void MinHeap::heapifyUp(size_t indOfArr)
 {
-    size_t parentIndex = (indOfArr-1)/2;
+    size_t parentIndex = (indOfArr == 0) ? 0 : (indOfArr-1)/2;
     size_t childIndex = indOfArr; 
-    while(parentIndex>=0)
+    while(parentIndex != childIndex)
     {
         if(!comparator(arr_ele_[parentIndex],arr_ele_[childIndex]))
         {
@@ -153,7 +165,7 @@ void MinHeap::heapifyUp(size_t indOfArr)
             arr_ele_[parentIndex]->setIndexInHeapArr(parentIndex);
             arr_ele_[childIndex]->setIndexInHeapArr(childIndex);
             childIndex = parentIndex;
-            parentIndex = (childIndex-1)/2;
+            parentIndex = (childIndex == 0) ? 0 : (childIndex-1)/2;
         }
         else
         {
@@ -168,13 +180,13 @@ void MinHeap::heapifyDown(size_t indOfArr)
     size_t childIndexLeft = (parentIndex*2)+1;
     size_t childIndexRight = (parentIndex*2)+2;
     // int maxEle; 
-    while(parentIndex < heap_capacity_)
+    while(parentIndex < heap_size_)
     {
        bool left = true;
        bool right = true;
 
-       left = (childIndexLeft < heap_capacity_) ? comparator(arr_ele_[parentIndex],arr_ele_[childIndexLeft]) : true;
-       right = (childIndexRight < heap_capacity_) ? comparator(arr_ele_[parentIndex],arr_ele_[childIndexRight]) : true;
+       left = (childIndexLeft < heap_size_) ? comparator(arr_ele_[parentIndex],arr_ele_[childIndexLeft]) : true;
+       right = (childIndexRight < heap_size_) ? comparator(arr_ele_[parentIndex],arr_ele_[childIndexRight]) : true;
 
        if(left == false && right == false)
        {
@@ -245,7 +257,7 @@ LRUKNode* MinHeap::top()
 
 void MinHeap::removeEle(size_t indOfArr)
 {
-    BUSTUB_ASSERT(isEmpty(), "Min Heap is empty so can't do pop");
+    BUSTUB_ASSERT(!isEmpty(), "Min Heap is empty so can't do pop");
     heap_size_--;
     std::swap(arr_ele_[indOfArr],arr_ele_[heap_size_]);
     arr_ele_[indOfArr]->setIndexInHeapArr(indOfArr);
@@ -268,18 +280,18 @@ void MinHeap::heapifyUpAndDown(size_t indOfArr)
 // ################################################# LRUKReplacer Functions Start ################################################# //
 
 // Constructor
-LRUKReplacer::LRUKReplacer(size_t num_frames, size_t k) : replacer_size_(num_frames), k_(k),min_heap_obj_(num_frames), total_num_frames(num_frames) {}
+LRUKReplacer::LRUKReplacer(size_t num_frames, size_t k) : replacer_size_(0), k_(k),min_heap_obj_(num_frames), total_num_frames(num_frames) {}
 
 // Evict
 auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool 
 { 
-    BUSTUB_ASSERT(min_heap_obj_.getHeapSize() != replacer_size_, "Min Heap size and replacer size does not match.");
+    BUSTUB_ASSERT(min_heap_obj_.getHeapSize() == replacer_size_, "Min Heap size and replacer size does not match.");
 
     if(replacer_size_ == 0)
         return false; 
     
     LRUKNode* topNode = min_heap_obj_.top();
-    BUSTUB_ASSERT(topNode->getIsEvictable() == false, "Can not evict is evictable false frame");
+    BUSTUB_ASSERT(topNode->getIsEvictable() != false, "Can not evict is evictable false frame");
     *frame_id = topNode->getFrameId();
 
     // // Remove node from minheap
@@ -302,8 +314,8 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool
 void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType access_type) 
 {
     // check validity of frame id
-    BUSTUB_ASSERT(validityOfFrame(frame_id) == false, "Invalid Frame id");
-    BUSTUB_ASSERT(min_heap_obj_.getHeapSize() != replacer_size_, "Min Heap size and replacer size does not match.");
+    BUSTUB_ASSERT(validityOfFrame(frame_id) == true, "Invalid Frame id");
+    BUSTUB_ASSERT(min_heap_obj_.getHeapSize() == replacer_size_, "Min Heap size and replacer size does not match.");
 
     if(node_store_.find(frame_id) == node_store_.end())
     {
@@ -315,7 +327,7 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
         node_store_[frame_id] = node;
 
         // push the object in heap
-        min_heap_obj_.push(node);
+        // min_heap_obj_.push(node);
     }
     else
     {
@@ -323,7 +335,8 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
         node->enterCurrentTimeStamp();
 
         // Heapify
-        min_heap_obj_.heapifyUpAndDown(node->getIndexInHeapArr());
+        if(node->getIsEvictable())
+            min_heap_obj_.heapifyUpAndDown(node->getIndexInHeapArr());
     }
 
 }
@@ -331,8 +344,8 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
 void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
 
     // check validity of frame id
-    BUSTUB_ASSERT(validityOfFrame(frame_id) == false, "Invalid Frame id");
-    BUSTUB_ASSERT(min_heap_obj_.getHeapSize() != replacer_size_, "Min Heap size and replacer size does not match.");
+    BUSTUB_ASSERT(validityOfFrame(frame_id) == true, "Invalid Frame id");
+    BUSTUB_ASSERT(min_heap_obj_.getHeapSize() == replacer_size_, "Min Heap size and replacer size does not match.");
 
     if(node_store_.find(frame_id) != node_store_.end())
     {
@@ -360,16 +373,16 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
 
 void LRUKReplacer::Remove(frame_id_t frame_id) 
 {
-    BUSTUB_ASSERT(min_heap_obj_.getHeapSize() != replacer_size_, "Min Heap size and replacer size does not match.");
+    BUSTUB_ASSERT(min_heap_obj_.getHeapSize() == replacer_size_, "Min Heap size and replacer size does not match.");
     // check validity of frame id
-    BUSTUB_ASSERT(validityOfFrame(frame_id) == false, "Invalid Frame id");
+    BUSTUB_ASSERT(validityOfFrame(frame_id) == true, "Invalid Frame id");
 
-    BUSTUB_ASSERT(replacer_size_ == 0, "No removable frame is present");
+    BUSTUB_ASSERT(replacer_size_ > 0, "No removable frame is present");
 
     if(node_store_.find(frame_id) != node_store_.end())
     {
         LRUKNode* node = node_store_[frame_id];
-        BUSTUB_ASSERT(node->getIsEvictable() == false,"Frame can not be remove as it is non evictable");
+        BUSTUB_ASSERT(node->getIsEvictable() == true,"Frame can not be remove as it is non evictable");
 
         // Remove node from minheap
         min_heap_obj_.removeEle(node->getIndexInHeapArr());
@@ -386,7 +399,7 @@ void LRUKReplacer::Remove(frame_id_t frame_id)
     } 
     else
     {
-        BUSTUB_ASSERT(true,"No frame found");
+        BUSTUB_ASSERT(false,"No frame found");
     }
 
     return;
@@ -399,7 +412,7 @@ auto LRUKReplacer::Size() -> size_t
 
 bool LRUKReplacer::validityOfFrame(frame_id_t frame_id)
 { 
-    if(frame_id <0 || frame_id >= total_num_frames)
+    if(frame_id <0 || frame_id >= static_cast<frame_id_t>(total_num_frames))
         return false; 
     else    
         return true;
