@@ -164,3 +164,24 @@ accessed, but not how often a page is accessed.
 
 - In LRU K Replacer replace_size_ will keep track how many frere frames(is_evictable with true) is available to evict
 - Only those LRU K nodes will be present in min heap which is set evictable with true.
+
+
+
+### HOW TO RUN
+### Full latency check
+```SHELL
+mkdir cmake-build-relwithdebinfo
+cd cmake-build-relwithdebinfo
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+make -j`nproc` bpm-bench
+./bin/bustub-bpm-bench --duration 5000 --latency 1
+```
+
+### Normal Functionality Check
+- LRUKReplacer: test/buffer/lru_k_replacer_test.cpp
+- DiskScheduler: test/storage/disk_scheduler_test.cpp
+- BufferPoolManager: test/buffer/buffer_pool_manager_test.cpp
+```SHELL
+$ make lru_k_replacer_test -j$(nproc)
+$ ./test/lru_k_replacer_test
+```

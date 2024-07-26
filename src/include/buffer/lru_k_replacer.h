@@ -45,7 +45,7 @@ class LRUKNode {
   explicit LRUKNode(size_t k,frame_id_t fid);
 
   // Return history_
-  std::list<size_t> getHistory();
+  std::list<size_t>* getHistory();
 
   // Return fid_
   frame_id_t getFrameId();

@@ -29,9 +29,9 @@ LRUKNode::LRUKNode(size_t k,frame_id_t fid) : k_(k),fid_(fid)
     index_in_heap_arr_ = -1;
 }
 
-std::list<size_t> LRUKNode::getHistory()
+std::list<size_t>* LRUKNode::getHistory()
 {
-    return history_;
+    return &history_;
 }
 
 frame_id_t LRUKNode::getFrameId()
@@ -89,13 +89,13 @@ void LRUKNode::enterCurrentTimeStamp()
 bool MinHeap::comparator(std::shared_ptr<LRUKNode>& ele1,std::shared_ptr<LRUKNode>& ele2)
 {
 
-    std::list<size_t> l1 = ele1->getHistory();
-    std::list<size_t> l2 = ele2->getHistory();
+    std::list<size_t>* l1 = ele1->getHistory();
+    std::list<size_t>* l2 = ele2->getHistory();
 
-    auto it1 = l1.rbegin();
-    auto it2 = l2.rbegin();
+    auto it1 = l1->rbegin();
+    auto it2 = l2->rbegin();
 
-    while(it1 != l1.rend())
+    while(it1 != l1->rend() && it2 != l2->rend())
     {
         if(*it1 == 0 && *it2 == 0)
         {
@@ -270,7 +270,9 @@ void MinHeap::removeEle(size_t indOfArr)
     arr_ele_[heap_size_]->setIndexInHeapArr(heap_size_);
     arr_ele_[heap_size_]->setIndexInHeapArr(-1);
     arr_ele_[heap_size_] = nullptr;
-    heapifyUpAndDown(indOfArr);
+    // If we are removing last element then no need to call anyhting
+    if(indOfArr != heap_size_)
+        heapifyUpAndDown(indOfArr);
     return;
 }
 
