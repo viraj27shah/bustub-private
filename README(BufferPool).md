@@ -102,3 +102,65 @@ accessed, but not how often a page is accessed.
 - RecordAccess : First we will check wheather frame is present in map or not if not then we will create a new LRUKnode else just update the current node.
 - SetEvictable : change the state of evicatble.
 - Remove : remove the evicatble frame from heap and map.
+
+
+## Task #3 - Buffer Pool Manager
+
+- Next, implement the buffer pool manager (BufferPoolManager). The BufferPoolManager is responsible for fetching database pages from disk with the DiskScheduler and storing them in memory. The BufferPoolManager can also schedule writes of dirty pages out to disk when it is either explicitly instructed to do so or when it needs to evict a page to make space for a new page.
+
+- To make sure that your implementation works correctly with the rest of the system, we will provide you with some functions already filled in. You will also not need to implement the code that actually reads and writes data to disk (this is called the DiskManager in our implementation). We will provide that functionality. You do, however, need to implement the DiskScheduler to process disk requests and dispatch them to the DiskManager (this is Task #2).
+
+- All in-memory pages in the system are represented by Page objects. The BufferPoolManager does not need to understand the contents of these pages. But it is important for you as the system developer to understand that Page objects are just containers for memory in the buffer pool and thus are not specific to a unique page. That is, each Page object contains a block of memory that the DiskManager will use as a location to copy the contents of a physical page that it reads from disk. The BufferPoolManager will reuse the same Page object to store data as it moves back and forth to disk. This means that the same Page object may contain a different physical page throughout the life of the system. The Page object's identifer (page_id) keeps track of what physical page it contains; if a Page object does not contain a physical page, then its page_id must be set to INVALID_PAGE_ID.
+
+- Each Page object also maintains a counter for the number of threads that have "pinned" that page. Your BufferPoolManager is not allowed to free a Page that is pinned. Each Page object also keeps track of whether it is dirty or not. It is your job to record whether a page was modified before it is unpinned. Your BufferPoolManager must write the contents of a dirty Page back to disk before that object can be reused.
+
+- Your BufferPoolManager implementation will use the LRUKReplacer and DiskScheduler classes that you created in the previous steps of this assignment. The LRUKReplacer will keep track of when Page objects are accessed so that it can decide which one to evict when it must free a frame to make room for copying a new physical page from disk. When mapping page_id to frame_id in the BufferPoolManager, again be warned that STL containers are not thread-safe. The DiskScheduler will schedule writes and reads to disk on the DiskManager.
+
+- You will need to implement the following functions defined in the header file (src/include/buffer/buffer_pool_manager.h) and in the source file (src/buffer/buffer_pool_manager.cpp):
+
+- FetchPage(page_id_t page_id)
+- UnpinPage(page_id_t page_id, bool is_dirty)
+- FlushPage(page_id_t page_id)
+- NewPage(page_id_t* page_id)
+- DeletePage(page_id_t page_id)
+- FlushAllPages()
+- For FetchPage, you should return nullptr if no page is available in the free list and all other pages are currently pinned. FlushPage should flush a page regardless of its pin status.
+
+- For UnpinPage, the is_dirty parameter keeps track of whether a page was modified while it was pinned.
+
+- The AllocatePage private method provides the BufferPoolManager a unique new page id when you want to create a new page in NewPage(). On the other hand, the DeallocatePage() method is a no-op that imitates freeing a page on the disk and you should call this in your DeletePage() implementation.
+
+- You do not need to make your buffer pool manager super efficient -- holding the buffer pool manager lock from the start to the end in each public-facing buffer pool manager function should be enough. However, you do need to ensure your buffer pool manager has reasonable performance, otherwise there will be problems in future projects. You can compare your benchmark result (QPS.1 and QPS.2) with other students and see if your implementation is too slow.
+
+- Please refer to the header files (lru_k_replacer.h, disk_scheduler.h, buffer_pool_manager.h) for more detailed specs and documentations.
+
+### Tasks
+- The BufferPoolManager is responsible for fetching database pages from disk with the DiskScheduler and storing them in memory. 
+- The BufferPoolManager can also schedule writes of dirty pages out to disk when it is either **explicitly instructed** to do so or when it needs to **evict a page** to make space for a new page.
+- All in-memory pages in the system are represented by Page objects. 
+- The Page object's identifer (page_id) keeps track of what physical page it contains; if a Page object does not contain a physical page, then its page_id must be set to INVALID_PAGE_ID.
+- Each Page object also maintains a counter for the number of threads that have "pinned" that page.
+- Your BufferPoolManager is **not allowed to free a Page that is pinned**.
+- Each Page object also keeps track of **whether it is dirty or not**. It is your job to record whether a page was modified before it is unpinned.
+- Your BufferPoolManager must write the contents of a dirty Page back to disk before that object can be **reused**.
+- LRUKReplacer will keep track of when Page objects are accessed so that it can decide which one to evict when it must free a frame to make room for copying a new physical page from disk.
+- When mapping page_id to frame_id in the BufferPoolManager, again be warned that STL containers are not thread-safe. 
+- Use mutexes or other locking mechanisms when accessing shared containers from multiple threads.
+
+
+
+
+
+
+- LRU K Replacer has nothing to do with pages
+- It only has info about frames
+- That How amny times and when this frame is accessed irrespective what data is inside
+- It only maintains frameid-> LRUKnode mapping
+- Bufferpool will decide when to evict by seeing free list -> which contains frame id (frame id which not contain any page)
+- It will ask lru K replacer which frame to evict
+
+
+- frame_id indicates the array index of page array
+
+- In LRU K Replacer replace_size_ will keep track how many frere frames(is_evictable with true) is available to evict
+- Only those LRU K nodes will be present in min heap which is set evictable with true.

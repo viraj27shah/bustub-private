@@ -34,6 +34,9 @@ class Page {
   Page() {
     data_ = new char[BUSTUB_PAGE_SIZE];
     ResetMemory();
+    page_id_ = INVALID_PAGE_ID;
+    is_dirty_ = false;
+    pin_count_ = 0;
   }
 
   /** Default destructor. */
@@ -68,6 +71,25 @@ class Page {
 
   /** Sets the page LSN. */
   inline void SetLSN(lsn_t lsn) { memcpy(GetData() + OFFSET_LSN, &lsn, sizeof(lsn_t)); }
+
+  /** Sets the page id. */
+  inline void SetPageId(page_id_t page_id) { page_id_ = page_id; }
+
+  /** Zeroes out the data that is held within the page. */
+  inline void ResetMemoryData() { memset(data_, OFFSET_PAGE_START, BUSTUB_PAGE_SIZE); }
+
+  /** Increment page Count */
+  inline void IncPinCount() { pin_count_++; }
+
+  /** Decrement page Count */
+  inline void DecPinCount() { pin_count_--; }
+
+
+  /** set page Count */
+  inline void SetPinCount(int newConut) { pin_count_ = newConut; }
+
+  /** set page is dirty flag */
+  inline void SetDirtyBit(bool flag) { is_dirty_ = flag; }
 
  protected:
   static_assert(sizeof(page_id_t) == 4);

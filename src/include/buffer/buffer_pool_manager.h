@@ -173,7 +173,30 @@ class BufferPoolManager {
    */
   auto DeletePage(page_id_t page_id) -> bool;
 
+
  private:
+
+  // Check the status of dirty bit and act accordingly
+  // Here each frame id is mapping of page array () frame id denotes index of array
+  void ActOnDirtyBit(frame_id_t frame_id);
+
+  // Check if frame no is valid or not
+  bool validityOfFrame(frame_id_t frame_id);
+
+  // Processes while creating a new page
+  /**
+ * check frame validity
+ * check pin count
+ * act on dirty bit status
+ * new page id
+ * entry in page_table_
+ * resent info of page(old page stored in frame id location in pages_ array)
+ * record access and setevicatble false
+ */
+  auto ProceesOfNewPage(frame_id_t frame_id) -> page_id_t;
+
+  void ProceesOfFetchPage(frame_id_t frame_id,page_id_t page_id);
+
   /** Number of pages in the buffer pool. */
   const size_t pool_size_;
   /** The next page id to be allocated  */
@@ -190,6 +213,7 @@ class BufferPoolManager {
   /** Replacer to find unpinned pages for replacement. */
   std::unique_ptr<LRUKReplacer> replacer_;
   /** List of free frames that don't have any pages on them. */
+  // New frames will be added at end and popped from front
   std::list<frame_id_t> free_list_;
   /** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */
   std::mutex latch_;
